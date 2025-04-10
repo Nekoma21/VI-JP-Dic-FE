@@ -20,11 +20,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ component: Component }) => {
         className="flex-1 flex flex-col overflow-hidden"
         style={{ minWidth: 0, backgroundColor: "#F5F7FA" }}
       >
-        {/* Header */}
-        <Header setIsMenuOpen={setIsMenuOpen} />
-
         {/* Main content area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <Header setIsMenuOpen={setIsMenuOpen} />
           {/* Render the passed component */}
           <Component />
 
