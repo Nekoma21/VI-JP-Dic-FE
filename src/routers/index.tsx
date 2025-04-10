@@ -5,6 +5,9 @@ import LookUpPage from "../views/lookup";
 import TranslatePage from "../views/translate";
 import DeckPage from "../views/deck";
 import SettingsPage from "../views/settings";
+import LoginPage from "../views/login";
+import RegisterPage from "../views/register";
+import VerifyPage from "../views/verify";
 
 const AllRouters = () => {
   return (
@@ -13,6 +16,15 @@ const AllRouters = () => {
 
       {/* Public route */}
       <Route element={<PublicRoute />}>
+        <Route path="/user/verify/:userId/:token" element={<VerifyPage />} />
+        <Route
+          path="/auth/login"
+          element={<MainLayout component={LoginPage} />}
+        />
+        <Route
+          path="/auth/register"
+          element={<MainLayout component={RegisterPage} />}
+        />
         <Route path="/kodomo" element={<MainLayout component={LookUpPage} />} />
         <Route path="/lookup" element={<MainLayout component={LookUpPage} />} />
         <Route

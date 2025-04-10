@@ -31,3 +31,8 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a6a6a6;
 }
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
