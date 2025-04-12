@@ -10,6 +10,7 @@ interface AxiosClient {
   application: AxiosInstance;
   formData: AxiosInstance;
   formDataAuth: AxiosInstance;
+  predict: AxiosInstance;
 }
 
 // Tạo các instance của Axios
@@ -25,6 +26,14 @@ const axiosClient: AxiosClient = {
 
   formData: axios.create({
     baseURL: import.meta.env.VITE_API_URL,
+    headers: {
+      "content-type": "multipart/form-data",
+      "Accept-Language": "vi",
+    },
+  }),
+
+  predict: axios.create({
+    baseURL: import.meta.env.VITE_FASTAPI_URL,
     headers: {
       "content-type": "multipart/form-data",
       "Accept-Language": "vi",

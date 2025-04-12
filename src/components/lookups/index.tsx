@@ -1,14 +1,17 @@
-import { type FC, useState } from "react";
+import { type FC, useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import SearchIcon from "../../assets/icon/icon-search.svg";
 import PenIcon from "../../assets/icon/icon-pen.svg";
 import MicIcon from "../../assets/icon/icon-mic.svg";
 import ImageIcon from "../../assets/icon/icon-image.svg";
+import KanjiDrawingBoard from "../kanji-draw-board/index";
 
 const LookupArea: FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("Nhật - Việt");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -16,6 +19,24 @@ const LookupArea: FC = () => {
     setSelectedLanguage(language);
     setIsDropdownOpen(false);
   };
+  const handleKanjiSelect = (kanji: string) => {
+    setSearchText((prevText) => `${prevText}${kanji}`);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        boardRef.current &&
+        !boardRef.current.contains(event.target as Node)
+      ) {
+        setIsDrawingBoardOpen(false); // Đóng board
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm mb-4">
       <div className="flex flex-col md:flex-row gap-4">
@@ -72,7 +93,10 @@ const LookupArea: FC = () => {
               className="flex items-center space-x-3 px-3 py-3 rounded-xl"
               style={{ backgroundColor: "#F5F7FA" }}
             >
-              <button className="cursor-pointer">
+              <button
+                className="cursor-pointer"
+                onClick={() => setIsDrawingBoardOpen(true)}
+              >
                 <img src={PenIcon} className="w-7 h-7" />
               </button>
               <button className="cursor-pointer">
@@ -85,6 +109,13 @@ const LookupArea: FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Kanji Drawing Board */}
+      {isDrawingBoardOpen && (
+        <div ref={boardRef} className="mt-4" style={{ width: "300%" }}>
+          <KanjiDrawingBoard onKanjiSelect={handleKanjiSelect} />
+        </div>
+      )}
     </div>
   );
 };
