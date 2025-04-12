@@ -15,8 +15,6 @@ const VerifyPage: React.FC = () => {
         if (!userId || !token) {
           throw new Error("Thông tin xác thực không hợp lệ.");
         }
-        console.log("userId", userId);
-        console.log("token", token);
         const response = await AuthAPI.verifyUser(userId, token);
         if (response.data.message === "Xác thực tài khoản thành công") {
           localStorage.setItem("access_token", response.data.data.token);
