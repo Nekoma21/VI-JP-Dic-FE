@@ -6,12 +6,18 @@ import MicIcon from "../../assets/icon/icon-mic.svg";
 import ImageIcon from "../../assets/icon/icon-image.svg";
 import KanjiDrawingBoard from "../kanji-draw-board/index";
 
+import { useNavigate, useLocation } from "react-router-dom";
+
 const LookupArea: FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("Nhật - Việt");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
   const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+
+  const [tempInputText, setTempInputText] = useState("");
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -20,7 +26,19 @@ const LookupArea: FC = () => {
     setIsDropdownOpen(false);
   };
   const handleKanjiSelect = (kanji: string) => {
-    setSearchText((prevText) => `${prevText}${kanji}`);
+    setTempInputText((prevText) => `${prevText}${kanji}`);
+  };
+
+  const handleSearch = () => {
+    if (!tempInputText.trim()) return;
+
+    if (location.pathname === "/lookup/result") {
+      navigate(`/lookup/result?text=${encodeURIComponent(tempInputText)}`, {
+        replace: true,
+      });
+    } else {
+      navigate(`/lookup/result?text=${encodeURIComponent(tempInputText)}`);
+    }
   };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -81,13 +99,22 @@ const LookupArea: FC = () => {
         {/* Search input */}
         <div className="flex-1 relative">
           <div className="flex items-center border border-gray-200 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary">
-            <img src={SearchIcon} className="w-6 h-6 text-gray-400 mr-2" />
+            <img
+              src={SearchIcon}
+              className="w-6 h-6 text-gray-400 mr-2 cursor-pointer"
+              onClick={handleSearch}
+            />
             <input
               type="text"
               placeholder="日本, nihon, Nhật Bản"
               className="flex-1 outline-none text-secondary"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              value={tempInputText}
+              onChange={(e) => setTempInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
             />
             <div
               className="flex items-center space-x-3 px-3 py-3 rounded-xl"

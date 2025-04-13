@@ -8,6 +8,7 @@ import SettingsPage from "../views/settings";
 import LoginPage from "../views/login";
 import RegisterPage from "../views/register";
 import VerifyPage from "../views/verify";
+import WordResult from "../views/word-result";
 
 const AllRouters = () => {
   return (
@@ -35,6 +36,10 @@ const AllRouters = () => {
         <Route
           path="/settings"
           element={<MainLayout component={SettingsPage} />}
+        />
+        <Route
+          path="/lookup/result"
+          element={<MainLayout component={WordResult} />}
         />
       </Route>
     </Routes>
