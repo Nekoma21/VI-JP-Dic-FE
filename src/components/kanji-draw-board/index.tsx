@@ -147,7 +147,7 @@ const KanjiDrawingBoard: React.FC<KanjiDrawingBoardProps> = ({
       <div className="flex justify-end gap-4 mt-4">
         <button
           onClick={handleClearCanvas}
-          className="text-red-500 hover:text-red-600 transition"
+          className="text-red-500 hover:text-red-600 transition cursor-pointer pr-4 pb-2"
         >
           Xóa
         </button>
