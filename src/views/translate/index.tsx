@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Clock, MessageSquare } from "lucide-react";
 import PenIcon from "../../assets/icon/icon-pen.svg";
 import MicIcon from "../../assets/icon/icon-mic.svg";
 import ImageIcon from "../../assets/icon/icon-image.svg";
+import KanjiDrawingBoard from "../../components/kanji-draw-board/index";
 import translateAPI from "../../api/translateAPI";
 import LoadingOverlay from "../../components/loading-overlay";
 
@@ -14,6 +15,8 @@ const TranslatePage = () => {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const handleSourceLanguageChange = (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -71,6 +74,26 @@ const TranslatePage = () => {
       setLoading(false);
     }
   };
+
+  const handleKanjiSelect = (kanji: string) => {
+    setInputText((prevText) => `${prevText}${kanji}`);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        boardRef.current &&
+        !boardRef.current.contains(event.target as Node)
+      ) {
+        setIsDrawingBoardOpen(false); // Đóng board
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   return (
     <div className="flex-1 bg-[#f5f7fa] p-6">
       <LoadingOverlay loading={loading} />
@@ -109,7 +132,10 @@ const TranslatePage = () => {
 
             <div className="flex items-center justify-between pb-2 pt-2 pl-4 pr-4 border-t border-[#dfeaf2]">
               <div className="flex items-center gap-4">
-                <button className="cursor-pointer">
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setIsDrawingBoardOpen(true)}
+                >
                   <img src={PenIcon} className="w-7 h-7" />
                 </button>
                 <button className="cursor-pointer">
@@ -148,6 +174,12 @@ const TranslatePage = () => {
               </div>
             </div>
           </div>
+          {/* Kanji Drawing Board */}
+          {isDrawingBoardOpen && (
+            <div ref={boardRef} className="mt-4" style={{ width: "300%" }}>
+              <KanjiDrawingBoard onKanjiSelect={handleKanjiSelect} />
+            </div>
+          )}
         </div>
 
         {/* Target Language */}
