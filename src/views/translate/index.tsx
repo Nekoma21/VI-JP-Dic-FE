@@ -6,6 +6,7 @@ import ImageIcon from "../../assets/icon/icon-image.svg";
 import KanjiDrawingBoard from "../../components/kanji-draw-board/index";
 import translateAPI from "../../api/translateAPI";
 import LoadingOverlay from "../../components/loading-overlay";
+import VoiceRecordingModal from "../../components/voice-modal/index";
 
 const TranslatePage = () => {
   const [sourceLanguage, setSourceLanguage] = useState("Japanese");
@@ -17,6 +18,9 @@ const TranslatePage = () => {
   const [loading, setLoading] = useState(false);
   const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+  const voiceRef = useRef<HTMLDivElement>(null);
+
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   const handleSourceLanguageChange = (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -81,11 +85,16 @@ const TranslatePage = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        boardRef.current &&
-        !boardRef.current.contains(event.target as Node)
-      ) {
-        setIsDrawingBoardOpen(false); // Đóng board
+      const target = event.target as Node;
+
+      const clickedOutsideBoard =
+        boardRef.current && !boardRef.current.contains(target);
+      const clickedOutsideVoiceModal =
+        voiceRef.current && !voiceRef.current.contains(target);
+
+      if (clickedOutsideBoard && clickedOutsideVoiceModal) {
+        setIsDrawingBoardOpen(false);
+        setIsVoiceModalOpen(false);
       }
     };
 
@@ -138,7 +147,10 @@ const TranslatePage = () => {
                 >
                   <img src={PenIcon} className="w-7 h-7" />
                 </button>
-                <button className="cursor-pointer">
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setIsVoiceModalOpen(true)}
+                >
                   <img src={MicIcon} className="w-7 h-7" />
                 </button>
                 <button
@@ -242,7 +254,15 @@ const TranslatePage = () => {
           ))}
         </div>
       </div>
-
+      {/* Voice modal */}
+      {isVoiceModalOpen && (
+        <div ref={voiceRef}>
+          <VoiceRecordingModal
+            onClose={() => setIsVoiceModalOpen(false)}
+            setInputText={setInputText}
+          />
+        </div>
+      )}
       {/* Modal */}
       {isModalOpen && (
         <div
