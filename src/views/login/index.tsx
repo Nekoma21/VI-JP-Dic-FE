@@ -66,13 +66,17 @@ const LoginPage = () => {
       setNotificationType("success");
       if (response.data.message === "Đăng nhập thành công") {
         localStorage.setItem("access_token", response.data.data.token);
+        localStorage.setItem("refresh_token", response.data.data.refreshToken);
         localStorage.setItem(
           "user_info",
           JSON.stringify(response.data.data.user)
         );
         setToken(response.data.data.token);
         setAccount(response.data.data.user);
-        navigate("/kodomo");
+        const redirectPath =
+          localStorage.getItem("redirectAfterLogin") || "/kodomo";
+        localStorage.removeItem("redirectAfterLogin");
+        navigate(redirectPath);
       }
     } catch (error: any) {
       setNotification(error.response?.data?.message || "Đã xảy ra lỗi.");

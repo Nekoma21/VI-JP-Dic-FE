@@ -47,7 +47,22 @@ const Sidebar: FC<SidebarProps> = ({ isMenuOpen, setIsMenuOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const protectedRoutes = ["/deck", "/settings"];
+
   const handleItemClick = (path: string) => {
+    const token = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+    const userInfo = localStorage.getItem("user_info");
+
+    if (
+      protectedRoutes.includes(path) &&
+      (!token || !refreshToken || !userInfo)
+    ) {
+      localStorage.setItem("redirectAfterLogin", path);
+      navigate("/auth/login");
+      return;
+    }
+
     navigate(path);
   };
 

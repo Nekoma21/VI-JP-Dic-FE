@@ -41,6 +41,11 @@ const LookupArea: FC = () => {
     }
   };
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryText = params.get("text") || "";
+    setTempInputText(queryText);
+  }, [location.search]);
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         boardRef.current &&
@@ -83,14 +88,14 @@ const LookupArea: FC = () => {
                 >
                   Nhật - Việt
                 </li>
-                <li
+                {/* <li
                   onClick={() => handleLanguageChange("Việt - Nhật")}
                   className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
                     selectedLanguage === "Việt - Nhật" ? "bg-gray-100" : ""
                   }`}
                 >
                   Việt - Nhật
-                </li>
+                </li> */}
               </ul>
             </div>
           )}

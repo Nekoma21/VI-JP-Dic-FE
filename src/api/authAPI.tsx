@@ -18,6 +18,10 @@ const AuthAPI = {
     const url = `/auth/verify/${userId}/${token}`;
     return axiosClient.application.get(url);
   },
+  refresh: (token: string) => {
+    const url = `/auth/refresh`;
+    return axiosClient.application.post(url, token);
+  },
 };
 
 export default AuthAPI;

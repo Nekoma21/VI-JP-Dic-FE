@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { useAuth } from "../../contexts/AccountContext";
 import { useState } from "react";
+import { logout } from "../../utils/authUtils";
 
 interface HeaderProps {
   setIsMenuOpen: (isOpen: boolean) => void;
@@ -16,10 +17,7 @@ const Header: FC<HeaderProps> = ({ setIsMenuOpen }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user_info");
-    setAccount(null);
-    setToken(null);
+    logout(setAccount, setToken, navigate);
   };
 
   return (
