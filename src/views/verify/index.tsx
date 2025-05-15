@@ -19,6 +19,10 @@ const VerifyPage: React.FC = () => {
         if (response.data.message === "Xác thực tài khoản thành công") {
           localStorage.setItem("access_token", response.data.data.token);
           localStorage.setItem(
+            "refresh_token",
+            response.data.data.refreshToken
+          );
+          localStorage.setItem(
             "user_info",
             JSON.stringify(response.data.data.user)
           );

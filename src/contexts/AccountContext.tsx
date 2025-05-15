@@ -34,12 +34,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         "Authorization"
       ] = `Bearer ${token}`;
     } else {
-      delete axiosClient.application.defaults.headers.common["Authorization"];
-      delete axiosClient.formData.defaults.headers.common["Authorization"];
+      delete axiosClient.applicationAuth.defaults.headers.common[
+        "Authorization"
+      ];
+      delete axiosClient.formDataAuth.defaults.headers.common["Authorization"];
 
       setAccount(null);
       localStorage.removeItem("access_token");
       localStorage.removeItem("user_info");
+      localStorage.removeItem("refresh_token");
     }
   }, [token]);
 

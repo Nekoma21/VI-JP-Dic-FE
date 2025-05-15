@@ -2,20 +2,17 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
 import queryString from "query-string";
 import { NavigateFunction } from "react-router-dom";
 
-// Lấy access token từ localStorage
-const accessToken = localStorage.getItem("access_token");
-
-// Định nghĩa kiểu cho axiosClient
-interface AxiosClient {
-  application: AxiosInstance;
-  formData: AxiosInstance;
-  formDataAuth: AxiosInstance;
-  formDataAI: AxiosInstance;
-}
-
-// Tạo các instance của Axios
-const axiosClient: AxiosClient = {
+const axiosClient = {
   application: axios.create({
+    baseURL: import.meta.env.VITE_API_URL,
+    headers: {
+      "content-type": "application/json",
+      "Accept-Language": "vi",
+    },
+    paramsSerializer: (params) => queryString.stringify(params),
+  }),
+
+  applicationAuth: axios.create({
     baseURL: import.meta.env.VITE_API_URL,
     headers: {
       "content-type": "application/json",
@@ -32,6 +29,14 @@ const axiosClient: AxiosClient = {
     },
   }),
 
+  formDataAuth: axios.create({
+    baseURL: import.meta.env.VITE_API_URL,
+    headers: {
+      "content-type": "multipart/form-data",
+      "Accept-Language": "vi",
+    },
+  }),
+
   formDataAI: axios.create({
     baseURL: import.meta.env.VITE_FASTAPI_URL,
     headers: {
@@ -39,54 +44,78 @@ const axiosClient: AxiosClient = {
       "Accept-Language": "vi",
     },
   }),
-
-  formDataAuth: axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-      "content-type": "multipart/form-data",
-      "Accept-Language": "vi",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  }),
 };
 
-// Hàm xử lý logout
-const handleLogout = (navigate: NavigateFunction, toast: any) => {
-  toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại");
+[axiosClient.applicationAuth, axiosClient.formDataAuth].forEach((instance) => {
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+});
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return null;
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          // dùng axios gốc để gọi
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      }
+    );
+
+    const newAccessToken = response.data.accessToken;
+    localStorage.setItem("access_token", newAccessToken);
+    return newAccessToken;
+  } catch {
+    return null;
+  }
+};
+
+const handleLogout = (navigate: NavigateFunction) => {
   setTimeout(() => {
     localStorage.removeItem("user_info");
     localStorage.removeItem("access_token");
-    navigate("/auth/login");
-  }, 5000);
+    localStorage.removeItem("refresh_token");
+    navigate("/auth/login", { replace: true });
+  }, 2000);
 };
 
-// Thiết lập interceptors
-export const setupInterceptors = (navigate: NavigateFunction, toast: any) => {
-  axiosClient.application.interceptors.response.use(
-    (response: AxiosResponse) => response,
-    (error: AxiosError) => {
-      if (error.response) {
-        const { status, data } = error.response;
-        if (status === 403 && (data as any).message === "Token has expired") {
-          handleLogout(navigate, toast);
-        }
-      }
-      return Promise.reject(error);
-    }
-  );
+export const setupInterceptors = (navigate: NavigateFunction) => {
+  [axiosClient.applicationAuth, axiosClient.formDataAuth].forEach(
+    (instance) => {
+      instance.interceptors.response.use(
+        (response: AxiosResponse) => response,
+        async (error: AxiosError) => {
+          const originalRequest = error.config as any;
+          if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
 
-  axiosClient.formData.interceptors.response.use(
-    (response: AxiosResponse) => response,
-    (error: AxiosError) => {
-      if (error.response) {
-        const { status, data } = error.response;
-        if (status === 403 && (data as any).message === "Token has expired") {
-          handleLogout(navigate, toast);
+            const newToken = await refreshAccessToken();
+            if (newToken) {
+              instance.defaults.headers = instance.defaults.headers || {};
+              instance.defaults.headers.Authorization = `Bearer ${newToken}`;
+
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return instance(originalRequest);
+            }
+
+            handleLogout(navigate);
+          }
+
+          return Promise.reject(error);
         }
-      }
-      return Promise.reject(error);
+      );
     }
   );
 };
-
 export default axiosClient;

@@ -9,6 +9,7 @@ import LoginPage from "../views/login";
 import RegisterPage from "../views/register";
 import VerifyPage from "../views/verify";
 import WordResult from "../views/word-result";
+import KanjiResult from "../views/kanji-result";
 
 const AllRouters = () => {
   return (
@@ -40,6 +41,10 @@ const AllRouters = () => {
         <Route
           path="/lookup/result"
           element={<MainLayout component={WordResult} />}
+        />
+        <Route
+          path="/lookup/kanji/result"
+          element={<MainLayout component={KanjiResult} />}
         />
       </Route>
     </Routes>

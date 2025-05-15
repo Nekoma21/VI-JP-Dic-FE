@@ -85,16 +85,11 @@ const TranslatePage = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-
-      const clickedOutsideBoard =
-        boardRef.current && !boardRef.current.contains(target);
-      const clickedOutsideVoiceModal =
-        voiceRef.current && !voiceRef.current.contains(target);
-
-      if (clickedOutsideBoard && clickedOutsideVoiceModal) {
+      if (
+        boardRef.current &&
+        !boardRef.current.contains(event.target as Node)
+      ) {
         setIsDrawingBoardOpen(false);
-        setIsVoiceModalOpen(false);
       }
     };
 
@@ -167,7 +162,6 @@ const TranslatePage = () => {
                     if (!inputText.trim())
                       return alert("Vui lòng nhập văn bản.");
                     try {
-                      setLoading(true);
                       const response = await translateAPI.translate(inputText);
                       setTranslatedText(
                         response.data.data.text || "Không có kết quả."
@@ -175,8 +169,6 @@ const TranslatePage = () => {
                     } catch (err) {
                       console.error("Lỗi dịch:", err);
                       alert("Lỗi khi gọi API dịch.");
-                    } finally {
-                      setLoading(false);
                     }
                   }}
                 >
