@@ -3,8 +3,9 @@ import { ChevronDown } from "lucide-react";
 import SearchIcon from "../../assets/icon/icon-search.svg";
 import PenIcon from "../../assets/icon/icon-pen.svg";
 import MicIcon from "../../assets/icon/icon-mic.svg";
-import ImageIcon from "../../assets/icon/icon-image.svg";
 import KanjiDrawingBoard from "../kanji-draw-board/index";
+import { saveLocalKeywordHistory } from "../../utils/history";
+import VoiceRecordingModal from "../../components/voice-modal";
 
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -13,6 +14,10 @@ const LookupArea: FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+
+  const voiceRef = useRef<HTMLDivElement>(null);
+
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   const [tempInputText, setTempInputText] = useState("");
 
@@ -31,6 +36,8 @@ const LookupArea: FC = () => {
 
   const handleSearch = () => {
     if (!tempInputText.trim()) return;
+
+    saveLocalKeywordHistory(tempInputText.trim());
 
     if (location.pathname === "/lookup/result") {
       navigate(`/lookup/result?text=${encodeURIComponent(tempInputText)}`, {
@@ -131,21 +138,32 @@ const LookupArea: FC = () => {
               >
                 <img src={PenIcon} className="w-7 h-7" />
               </button>
-              <button className="cursor-pointer">
+              <button
+                className="cursor-pointer"
+                onClick={() => setIsVoiceModalOpen(true)}
+              >
                 <img src={MicIcon} className="w-7 h-7" />
-              </button>
-              <button className="cursor-pointer">
-                <img src={ImageIcon} className="w-7 h-7" />
               </button>
             </div>
           </div>
         </div>
       </div>
+      {/* Voice modal */}
+      {isVoiceModalOpen && (
+        <div ref={voiceRef}>
+          <VoiceRecordingModal
+            onClose={() => setIsVoiceModalOpen(false)}
+            setInputText={setTempInputText}
+          />
+        </div>
+      )}
 
       {/* Kanji Drawing Board */}
       {isDrawingBoardOpen && (
-        <div ref={boardRef} className="mt-4" style={{ width: "300%" }}>
-          <KanjiDrawingBoard onKanjiSelect={handleKanjiSelect} />
+        <div className="mt-4 mr-10" style={{ width: "900%" }}>
+          <div ref={boardRef} style={{ width: "33.4%" }}>
+            <KanjiDrawingBoard onKanjiSelect={handleKanjiSelect} />
+          </div>
         </div>
       )}
     </div>

@@ -1,15 +1,16 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import PublicRoute from "./public-route";
+import ProtectedRoute from "./protected-route";
 import MainLayout from "../components/layouts/main";
 import LookUpPage from "../views/lookup";
 import TranslatePage from "../views/translate";
 import DeckPage from "../views/deck";
-import SettingsPage from "../views/settings";
 import LoginPage from "../views/login";
 import RegisterPage from "../views/register";
 import VerifyPage from "../views/verify";
 import WordResult from "../views/word-result";
 import KanjiResult from "../views/kanji-result";
+import ProfilePage from "../views/profile";
 
 const AllRouters = () => {
   return (
@@ -33,11 +34,6 @@ const AllRouters = () => {
           path="/translate"
           element={<MainLayout component={TranslatePage} />}
         />
-        <Route path="/deck" element={<MainLayout component={DeckPage} />} />
-        <Route
-          path="/settings"
-          element={<MainLayout component={SettingsPage} />}
-        />
         <Route
           path="/lookup/result"
           element={<MainLayout component={WordResult} />}
@@ -45,6 +41,14 @@ const AllRouters = () => {
         <Route
           path="/lookup/kanji/result"
           element={<MainLayout component={KanjiResult} />}
+        />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/deck" element={<MainLayout component={DeckPage} />} />
+        <Route
+          path="/settings"
+          element={<MainLayout component={ProfilePage} />}
         />
       </Route>
     </Routes>

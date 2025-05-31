@@ -5,6 +5,7 @@ import cardAPI from "../../api/cardAPI";
 import deckAPI from "../../api/deckAPI";
 import type { Deck, CardE } from "../../types/deck";
 import { toast } from "react-toastify";
+import translateAPI from "../../api/translateAPI";
 interface Example {
   japanese: string;
   reading: string;
@@ -27,15 +28,18 @@ interface WordDetails {
 
 interface DetailWordProps {
   wordId: string | null;
+  longWordText: string | null;
 }
 
-const DetailWord: React.FC<DetailWordProps> = ({ wordId }) => {
+const DetailWord: React.FC<DetailWordProps> = ({ wordId, longWordText }) => {
   const [wordDetails, setWordDetails] = useState<WordDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string>("");
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [longText, setLongText] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [newCard, setNewCard] = useState({
     vocabulary: "",
     example: "",
@@ -74,7 +78,7 @@ const DetailWord: React.FC<DetailWordProps> = ({ wordId }) => {
       };
       await cardAPI.addCard(selectedDeckId, card);
       setIsAddCardModalOpen(false);
-      toast.success("Thhêm thẻ thành công!");
+      toast.success("Thêm thẻ thành công!");
     } catch (error) {
       console.error("Lỗi khi tạo thẻ:", error);
     }
@@ -91,9 +95,22 @@ const DetailWord: React.FC<DetailWordProps> = ({ wordId }) => {
   };
   useEffect(() => {
     const fetchWordDetails = async () => {
+      setLoading(true);
       if (!wordId) {
         setWordDetails(null);
-        setError("Không tìm thấy từ nào");
+        console.log(longWordText);
+        if (longWordText) {
+          try {
+            const res = await translateAPI.translate(longWordText);
+            setLongText(res.data.data.text);
+          } catch {
+            setError("Không thể dịch câu văn");
+          }
+        } else {
+          setError("Không tìm thấy từ nào");
+        }
+
+        setLoading(false);
         return;
       }
       setError(null);
@@ -129,12 +146,28 @@ const DetailWord: React.FC<DetailWordProps> = ({ wordId }) => {
         console.error("Lỗi khi gọi API getWord:", err);
         setWordDetails(null);
         setError("Lỗi khi tải chi tiết từ");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchWordDetails();
-  }, [wordId]);
+  }, [wordId, longWordText]);
 
+  if (loading) {
+    return (
+      <div className="h-full w-full p-4 rounded-2xl bg-white flex items-center justify-center">
+        <span>Đang tải...</span> {/* hoặc spinner component */}
+      </div>
+    );
+  }
+  if (longText) {
+    return (
+      <div className="h-full w-full p-4 rounded-2xl bg-white">
+        <h2 className="text-lg font-medium text-blue-600">{longText}</h2>
+      </div>
+    );
+  }
   if (error) {
     return (
       <div className="h-full w-full p-4 rounded-2xl bg-white">

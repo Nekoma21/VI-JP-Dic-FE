@@ -1,10 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import HanziWriter from "hanzi-writer";
-
-type WriterHandle = {
-  animateCharacter: () => void;
-};
-
 interface KanjiStrokeAnimatorProps {
   char: string;
   width?: number;

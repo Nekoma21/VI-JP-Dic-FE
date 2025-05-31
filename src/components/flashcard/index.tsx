@@ -125,7 +125,7 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({ deck, onBack }) => {
         reading: editCard.reading,
       };
 
-      const { data } = await cardAPI.updateCard(currentCard._id, updatedCard);
+      await cardAPI.updateCard(currentCard._id, updatedCard);
 
       setCards((prev) =>
         prev.map((c) =>

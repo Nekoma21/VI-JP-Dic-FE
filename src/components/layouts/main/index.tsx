@@ -26,7 +26,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ component: Component }) => {
           {/* Render the passed component */}
           <Component />
 
-          {/* Footer */}
           <Footer />
         </main>
       </div>

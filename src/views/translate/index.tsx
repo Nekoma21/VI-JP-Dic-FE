@@ -7,6 +7,11 @@ import KanjiDrawingBoard from "../../components/kanji-draw-board/index";
 import translateAPI from "../../api/translateAPI";
 import LoadingOverlay from "../../components/loading-overlay";
 import VoiceRecordingModal from "../../components/voice-modal/index";
+import {
+  getLocalTranslationHistory,
+  saveLocalTranslationHistory,
+  TranslationRecord,
+} from "../../utils/translateHistory";
 
 const TranslatePage = () => {
   const [sourceLanguage, setSourceLanguage] = useState("Japanese");
@@ -21,6 +26,38 @@ const TranslatePage = () => {
   const voiceRef = useRef<HTMLDivElement>(null);
 
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+
+  const socketRef = useRef<WebSocket | null>(null);
+
+  const isFirstStart = useRef(true);
+
+  const [translationHistory, setTranslationHistory] = useState<
+    TranslationRecord[]
+  >([]);
+
+  useEffect(() => {
+    setTranslationHistory(getLocalTranslationHistory());
+  }, [inputText]);
+
+  useEffect(() => {
+    socketRef.current = new WebSocket(
+      "ws://localhost:8000/api/v1/ws/translate"
+    );
+    socketRef.current.onopen = () => console.log("WebSocket connected");
+    socketRef.current.onerror = (err) => console.error("WebSocket error", err);
+
+    socketRef.current.onmessage = (event) => {
+      const msg = event.data as string;
+
+      setTranslatedText((prev) =>
+        prev.length === 0 ? msg : prev.trimEnd() + " " + msg
+      );
+    };
+
+    return () => {
+      socketRef.current?.close();
+    };
+  }, []);
 
   const handleSourceLanguageChange = (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -128,6 +165,7 @@ const TranslatePage = () => {
           </div>
           <div className="pb-2 pt-4 pl-4 pr-4 bg-white rounded-2xl">
             <textarea
+              id="translate-input"
               className="w-full h-48 resize-none border-0 focus:outline-none text-[#343c6a]"
               placeholder="Nhập văn bản để dịch..."
               value={inputText}
@@ -158,18 +196,51 @@ const TranslatePage = () => {
               <div className="flex items-center justify-end p-4 border-[#dfeaf2]">
                 <button
                   className="flex items-center gap-2 text-[#7e869e] hover:text-[#343c6a] bg-[#f1f1f1] px-3 py-1.5 rounded-md ml-4 cursor-pointer"
-                  onClick={async () => {
-                    if (!inputText.trim())
+                  // onClick={async () => {
+                  //   if (!inputText.trim())
+                  //     return alert("Vui lòng nhập văn bản.");
+                  //   try {
+                  //     const response = await translateAPI.translate(inputText);
+                  //     setTranslatedText(
+                  //       response.data.data.text || "Không có kết quả."
+                  //     );
+                  //   } catch (err) {
+                  //     console.error("Lỗi dịch:", err);
+                  //     alert("Lỗi khi gọi API dịch.");
+                  //   }
+                  // }}
+                  onClick={() => {
+                    if (!inputText.trim()) {
                       return alert("Vui lòng nhập văn bản.");
-                    try {
-                      const response = await translateAPI.translate(inputText);
-                      setTranslatedText(
-                        response.data.data.text || "Không có kết quả."
-                      );
-                    } catch (err) {
-                      console.error("Lỗi dịch:", err);
-                      alert("Lỗi khi gọi API dịch.");
                     }
+                    if (
+                      !socketRef.current ||
+                      socketRef.current.readyState !== WebSocket.OPEN
+                    ) {
+                      return alert(
+                        "Chưa kết nối đến server. Vui lòng thử lại sau."
+                      );
+                    }
+
+                    setTranslatedText("");
+                    isFirstStart.current = true;
+
+                    // Gửi payload giống Flask: { model: "javi" hoặc "vija", content: inputText }
+                    const modelKey =
+                      sourceLanguage === "Japanese" ? "javi" : "vija";
+                    socketRef.current.send(
+                      JSON.stringify({
+                        model: modelKey,
+                        content: inputText.trim(),
+                      })
+                    );
+
+                    const record: TranslationRecord = {
+                      source: inputText.trim(),
+                      timestamp: new Date().toISOString(),
+                    };
+                    saveLocalTranslationHistory(record);
+                    setTranslationHistory(getLocalTranslationHistory());
                   }}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -224,26 +295,50 @@ const TranslatePage = () => {
       <div className="mb-6">
         <button className="bg-[#ffe000] text-[#343c6a] font-medium px-4 py-2 rounded-full flex items-center gap-2 mb-4">
           <Clock className="w-5 h-5" />
-          <span>Lịch sử</span>
+          <span>Lịch sử dịch</span>
         </button>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {[1, 2, 3].map((item, index) => (
-            <div
-              key={index}
-              className="p-4 border-b border-[#dfeaf2] last:border-b-0"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-[#343c6a] font-medium">
-                  Hôm nay tôi muốn ăn gì
-                </p>
-                <div className="flex items-center gap-2 text-[#a6a6a6] text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>2025-03-30</span>
+          {translationHistory.length === 0 ? (
+            <p className="p-4 text-center text-gray-400">
+              Chưa có lịch sử dịch
+            </p>
+          ) : (
+            translationHistory.map((rec, idx) => (
+              <button
+                key={idx}
+                className="w-full text-left p-4 border-b border-[#dfeaf2] last:border-b-0 hover:bg-gray-50"
+                onClick={() => {
+                  // 1. Đổ lại inputText từ source
+                  setInputText(rec.source);
+                  // 2. Xóa luôn kết quả cũ nếu bạn muốn
+                  setTranslatedText("");
+                  // 3. (Tùy chọn) tự động focus vào textarea
+                  document.getElementById("translate-input")?.focus();
+                }}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 pr-4">
+                    <p className="text-[#343c6a] font-medium mb-1">
+                      “{rec.source}”
+                    </p>
+                  </div>
+                  <div className="text-[#a6a6a6] text-sm flex flex-col items-end">
+                    <Clock className="w-4 h-4 mb-1" />
+                    <span>
+                      {new Date(rec.timestamp).toLocaleString("vi-VN", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       </div>
       {/* Voice modal */}

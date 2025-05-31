@@ -1,6 +1,6 @@
 // src/pages/KanjiResult.tsx
 import { useEffect, useState } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import LookupArea from "../../components/lookups";
 import KanjiDetail from "../../components/kanji-detail";
 
@@ -19,7 +19,6 @@ type LocationState = {
 };
 
 const KanjiResult: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const location = useLocation();
   const state = location.state as LocationState;
 
@@ -28,11 +27,9 @@ const KanjiResult: React.FC = () => {
   );
 
   useEffect(() => {
-    // ưu tiên đọc từ state
     if (state?.kanji) {
       setKanjiData(state.kanji);
     } else {
-      // nếu không có state, có thể fallback fetch API hoặc báo lỗi
       setKanjiData(null);
     }
   }, [state]);
