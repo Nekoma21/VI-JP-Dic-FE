@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import wordAPI from "../../api/wordAPI";
 import KanjiStrokeAnimator from "../kanji-stroke";
+import { saveLocalKeywordHistory } from "../../utils/history";
 
 interface WordEntry {
   _id: string;
@@ -29,14 +30,20 @@ interface WordSearchResult {
 interface Props {
   searchText: string;
   onSelectWord: (id: string | null) => void;
+  onSetLongWord: (text: string | null) => void;
 }
 
-const SearchResult: React.FC<Props> = ({ searchText, onSelectWord }) => {
+const SearchResult: React.FC<Props> = ({
+  searchText,
+  onSelectWord,
+  onSetLongWord,
+}) => {
   const [searchResult, setSearchResult] = useState<WordSearchResult | null>(
     null
   );
   const [kanjiList, setKanjiList] = useState<KanjiEntry[]>([]);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchSearchResult = async () => {
       try {
@@ -52,6 +59,8 @@ const SearchResult: React.FC<Props> = ({ searchText, onSelectWord }) => {
         } else {
           setSearchResult(null);
           onSelectWord(null);
+          console.log(searchText);
+          onSetLongWord(searchText);
         }
       } catch (error) {
         console.error("Lỗi khi tìm kiếm từ:", error);
@@ -93,6 +102,7 @@ const SearchResult: React.FC<Props> = ({ searchText, onSelectWord }) => {
   }
 
   const handleWordClick = (text: string) => {
+    saveLocalKeywordHistory(text.trim());
     navigate(`?text=${encodeURIComponent(text)}`);
   };
 
@@ -164,14 +174,15 @@ const SearchResult: React.FC<Props> = ({ searchText, onSelectWord }) => {
                   <p className="mt-2">{k.meaning}</p>
                   <button
                     className="mt-2 text-sm text-blue-600 hover:underline"
-                    onClick={() =>
+                    onClick={() => {
+                      saveLocalKeywordHistory(k.text.trim());
                       navigate(
                         `/lookup/kanji/result?text=${encodeURIComponent(
                           k.text
                         )}`,
                         { state: { kanji: k } }
-                      )
-                    }
+                      );
+                    }}
                   >
                     Xem chi tiết
                   </button>

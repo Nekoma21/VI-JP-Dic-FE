@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router-dom";
 const WordResult = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [longWord, setLongWord] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -24,10 +25,11 @@ const WordResult = () => {
             <SearchResult
               searchText={searchText}
               onSelectWord={setSelectedWord}
+              onSetLongWord={setLongWord}
             />
           </div>
           <div className="flex-1 overflow-auto bg-white rounded-2xl">
-            <DetailWord wordId={selectedWord} />
+            <DetailWord wordId={selectedWord} longWordText={longWord} />
           </div>
         </div>
       </div>

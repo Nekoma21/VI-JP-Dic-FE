@@ -86,10 +86,10 @@ const DeckPage = () => {
           decks={decks}
           heatmap={heatmap}
           onDeckClick={handleDeckClick}
-          onRenameDeck={async (id, name) => {
+          onRenameDeck={async () => {
             await fetchDecks();
           }}
-          onUpdateCard={async (id, total, newc) => {
+          onUpdateCard={async () => {
             await fetchDecks();
           }}
           onDelete={fetchDecks}
