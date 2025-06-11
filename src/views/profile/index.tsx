@@ -33,10 +33,10 @@ export default function ProfilePage() {
           setIsVerified(d.verified);
           setUserInfo({
             fullname: d.fullname,
-            birthday: d.birthday.split("T")[0],
+            birthday: d.birthday ? d.birthday.split("T")[0] : "",
             sex: d.sex,
-            level: d.level,
-            demand: d.demand,
+            level: d.level ?? 5,
+            demand: d.demand ?? "Luyện thi chứng chỉ",
           });
           // đồng bộ account context
           setAccount({

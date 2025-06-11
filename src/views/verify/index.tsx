@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { useAuth } from "../../contexts/AccountContext";
@@ -8,6 +8,8 @@ const VerifyPage: React.FC = () => {
   const { userId, token } = useParams<{ userId: string; token: string }>();
 
   const { setAccount, setToken } = useAuth();
+
+  const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
     const verifyUser = async () => {
@@ -33,17 +35,21 @@ const VerifyPage: React.FC = () => {
           console.error("Xác thực thất bại:", response.data.message);
         }
       } catch (error: any) {
-        console.error(
-          "Lỗi xác thực:",
-          error.response?.data?.message || error.message
-        );
+        const msg = error.response?.data?.message || error.message;
+        setMessage(msg);
       }
     };
 
     verifyUser();
   }, [userId, token, navigate]);
 
-  return <div className="flex items-center justify-center h-screen"></div>;
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <p className="text-center text-lg text-gray-700">
+        {message || "Đang xác thực liên kết..."}
+      </p>
+    </div>
+  );
 };
 
 export default VerifyPage;

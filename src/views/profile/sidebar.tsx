@@ -10,6 +10,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState, useRef } from "react";
+import { toast } from "react-toastify";
 
 interface ProfileSidebarProps {
   activeTab: "intro" | "activities" | "security";
@@ -53,7 +54,7 @@ export default function ProfileSidebar({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Vui lòng chọn file ảnh!");
+      toast.warning("Vui lòng chọn file ảnh!");
       return;
     }
 

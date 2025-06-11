@@ -73,8 +73,10 @@ const LoginPage = () => {
         );
         setToken(response.data.data.token);
         setAccount(response.data.data.user);
+        const userRole = response.data.data.user.role;
         const redirectPath =
-          localStorage.getItem("redirectAfterLogin") || "/kodomo";
+          localStorage.getItem("redirectAfterLogin") ||
+          (userRole === 1 ? "/admin/dashboard" : "/kodomo");
         localStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
       }
@@ -86,12 +88,40 @@ const LoginPage = () => {
     }
   };
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Password reset requested for:", resetEmail);
-    // Here call an API to send a reset email
-    setShowForgotPasswordModal(false);
-    // Show success message or notification
+    setNotification("");
+    setNotificationType("");
+
+    if (!resetEmail) {
+      setNotification("Vui lòng nhập email.");
+      setNotificationType("error");
+      return;
+    }
+    if (!validateEmail(resetEmail)) {
+      setNotification("Email không hợp lệ.");
+      setNotificationType("error");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Gọi API quên mật khẩu
+      const res = await AuthAPI.forgotPassword(resetEmail);
+      setNotification(
+        res.data.message ||
+          "Liên kết đặt lại mật khẩu đã được gửi đến email của bạn."
+      );
+      setNotificationType("success");
+      setShowForgotPasswordModal(false);
+      setResetEmail("");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Đã xảy ra lỗi.";
+      setNotification(msg);
+      setNotificationType("error");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="w-full">
@@ -269,53 +299,58 @@ const LoginPage = () => {
               >
                 <button
                   type="button"
-                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 cursor-pointer"
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                   onClick={() => setShowForgotPasswordModal(false)}
                 >
                   <X className="h-5 w-5" />
                 </button>
 
-                <h2 className="text-xl font-semibold text-[#232323] mb-6">
-                  Quên mật khẩu
-                </h2>
+                <h2 className="text-xl font-semibold mb-6">Quên mật khẩu</h2>
 
-                <p className="text-[#232323] mb-4">
-                  Vui lòng nhập địa chỉ email đã đăng ký. Chúng tôi sẽ gửi cho
-                  bạn một liên kết để đặt lại mật khẩu.
+                <p className="mb-4">
+                  Nhập email đã đăng ký. Chúng tôi sẽ gửi liên kết đặt lại mật
+                  khẩu.
                 </p>
 
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div>
-                    <label
-                      htmlFor="reset-email"
-                      className="block text-[#232323] font-medium mb-1"
-                    >
+                    <label htmlFor="reset-email" className="block mb-1">
                       Email
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-[#292d32]" />
+                        <Mail className="h-5 w-5" />
                       </div>
                       <input
                         id="reset-email"
                         type="email"
                         value={resetEmail}
                         onChange={(e) => setResetEmail(e.target.value)}
-                        className="block w-full pl-10 py-3 border border-[#dfeaf2] rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-[#dfeaf2]"
+                        className="block w-full pl-10 py-3 border rounded-2xl"
                         placeholder="Enter your email"
-                        required
                       />
                     </div>
                   </div>
 
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="w-full py-3 px-4 bg-[#2D60FF] text-white rounded-2xl hover:bg-opacity-90 transition-colors cursor-pointer"
+                  {notification && (
+                    <div
+                      className={`p-2 rounded text-white text-center ${
+                        notificationType === "success"
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
                     >
-                      Gửi liên kết đặt lại
-                    </button>
-                  </div>
+                      {notification}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-blue-600 text-white rounded-2xl"
+                    disabled={loading}
+                  >
+                    Gửi liên kết đặt lại
+                  </button>
                 </form>
               </div>
             </div>

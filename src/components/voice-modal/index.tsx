@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Play, Save, X } from "lucide-react";
 import transcribeAPI from "../../api/transcribeAPI";
+import { toast } from "react-toastify";
 
 interface VoiceRecordingModalProps {
   onClose: () => void;
@@ -63,8 +64,9 @@ const VoiceRecordingModal = ({
         setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (error) {
-      console.error("Error accessing microphone:", error);
-      alert("Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập.");
+      toast.warning(
+        "Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập."
+      );
     }
   };
 
@@ -92,8 +94,7 @@ const VoiceRecordingModal = ({
         setInputText(transcribedText);
         onClose();
       } catch (err) {
-        console.error("Lỗi khi gọi API nhận dạng giọng nói:", err);
-        alert("Không thể xử lý âm thanh.");
+        toast.error("Không thể xử lý âm thanh.");
       }
     }
   };

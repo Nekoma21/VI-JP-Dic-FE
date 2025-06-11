@@ -29,4 +29,6 @@ dist-ssr
 # environment files
 .env
 
+.env.fe.prod
 
+docker-compose.yml

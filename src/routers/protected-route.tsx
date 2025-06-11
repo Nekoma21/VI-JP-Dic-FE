@@ -1,12 +1,21 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../contexts/AccountContext";
 
-const ProtectedRoute = () => {
+type ProtectedRouteProps = {
+  allowedRoles: number[];
+};
+
+const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { account } = useAuth();
 
   if (!account) {
     return <Navigate to="/auth/login" replace />;
   }
+
+  if (!allowedRoles.includes(account.role)) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
   return <Outlet />;
 };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, Edit, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { validatePassword } from "../../validation/password-validation";
+import { toast } from "react-toastify";
 
 interface UserInfo {
   fullname: string;
@@ -66,9 +67,9 @@ export default function ProfileContent({
     if (isEditing) {
       try {
         await onUpdateUser(formData);
-        alert("Cập nhật thông tin thành công");
+        toast.success("Cập nhật thông tin thành công");
       } catch {
-        alert("Lỗi khi cập nhật thông tin");
+        toast.error("Lỗi khi cập nhật thông tin");
       }
     } else {
       setFormData({ ...userInfo });
@@ -94,7 +95,7 @@ export default function ProfileContent({
   const handlePasswordSubmit = async () => {
     // validate required
     if (!currentPassword || !newPassword || !confirmPassword) {
-      alert("Vui lòng nhập đầy đủ thông tin.");
+      toast.warning("Vui lòng nhập đầy đủ thông tin.");
       return;
     }
     // validate new strength
@@ -113,15 +114,15 @@ export default function ProfileContent({
     }
     try {
       await onChangePassword({ currentPassword, newPassword });
-      alert("Đổi mật khẩu thành công");
+      toast.success("Đổi mật khẩu thành công");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
       if (err.response && err.response.status === 401) {
-        alert(err.response.data.message || "Mật khẩu cũ không đúng");
+        toast.warning(err.response.data.message || "Mật khẩu cũ không đúng");
       } else {
-        alert(err.message || "Lỗi đổi mật khẩu");
+        toast.error(err.message || "Lỗi đổi mật khẩu");
       }
     }
   };

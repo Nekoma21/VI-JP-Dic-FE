@@ -15,11 +15,8 @@ const LookUpPage = () => {
   }, []);
 
   const onHistoryClick = (keyword: string) => {
-    // 1. Đẩy keyword mới lên đầu (và loại trùng) trong localStorage
     saveLocalKeywordHistory(keyword);
-    // 2. Cập nhật lại state để render lại ngay
     setHistoryItems(getLocalKeywordHistory());
-    // 3. Điều hướng sang trang kết quả
     navigate(`/lookup/result?text=${encodeURIComponent(keyword)}`);
   };
 

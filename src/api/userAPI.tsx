@@ -36,6 +36,10 @@ const userAPI = {
     formData.append("avatar", file);
     return axiosClient.formDataAuth.patch(url, formData);
   },
+  getAllUsers: () => {
+    const url = `/users/list`;
+    return axiosClient.applicationAuth.get(url);
+  },
 };
 
 export default userAPI;

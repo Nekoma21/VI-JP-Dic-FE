@@ -1,10 +1,17 @@
+"use client";
+
+import type React from "react";
+
 import { type FC, useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Clock } from "lucide-react";
 import SearchIcon from "../../assets/icon/icon-search.svg";
 import PenIcon from "../../assets/icon/icon-pen.svg";
 import MicIcon from "../../assets/icon/icon-mic.svg";
 import KanjiDrawingBoard from "../kanji-draw-board/index";
-import { saveLocalKeywordHistory } from "../../utils/history";
+import {
+  saveLocalKeywordHistory,
+  getLocalKeywordHistory,
+} from "../../utils/history";
 import VoiceRecordingModal from "../../components/voice-modal";
 
 import { useNavigate, useLocation } from "react-router-dom";
@@ -13,16 +20,24 @@ const LookupArea: FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("Nhật - Việt");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
+  const [isHistoryDropdownOpen, setIsHistoryDropdownOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<string[]>([]);
 
+  const boardRef = useRef<HTMLDivElement>(null);
   const voiceRef = useRef<HTMLDivElement>(null);
+  const historyDropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-
   const [tempInputText, setTempInputText] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Load history items on component mount
+  useEffect(() => {
+    setHistoryItems(getLocalKeywordHistory());
+  }, []);
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -30,35 +45,70 @@ const LookupArea: FC = () => {
     setSelectedLanguage(language);
     setIsDropdownOpen(false);
   };
+
   const handleKanjiSelect = (kanji: string) => {
     setTempInputText((prevText) => `${prevText}${kanji}`);
   };
 
-  const handleSearch = () => {
-    if (!tempInputText.trim()) return;
+  const handleSearch = (searchText?: string) => {
+    const textToSearch = searchText || tempInputText;
+    if (!textToSearch.trim()) return;
 
-    saveLocalKeywordHistory(tempInputText.trim());
+    saveLocalKeywordHistory(textToSearch.trim());
+    setHistoryItems(getLocalKeywordHistory()); // Update history items
 
     if (location.pathname === "/lookup/result") {
-      navigate(`/lookup/result?text=${encodeURIComponent(tempInputText)}`, {
+      navigate(`/lookup/result?text=${encodeURIComponent(textToSearch)}`, {
         replace: true,
       });
     } else {
-      navigate(`/lookup/result?text=${encodeURIComponent(tempInputText)}`);
+      navigate(`/lookup/result?text=${encodeURIComponent(textToSearch)}`);
+    }
+
+    setIsHistoryDropdownOpen(false);
+  };
+
+  const handleHistoryItemClick = (keyword: string) => {
+    setTempInputText(keyword);
+    handleSearch(keyword);
+  };
+
+  const handleInputFocus = () => {
+    if (historyItems.length > 0) {
+      setIsHistoryDropdownOpen(true);
     }
   };
+
+  const handleInputBlur = (e: React.FocusEvent) => {
+    // Delay hiding dropdown to allow clicking on history items
+    setTimeout(() => {
+      if (!historyDropdownRef.current?.contains(e.relatedTarget as Node)) {
+        setIsHistoryDropdownOpen(false);
+      }
+    }, 150);
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const queryText = params.get("text") || "";
     setTempInputText(queryText);
   }, [location.search]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         boardRef.current &&
         !boardRef.current.contains(event.target as Node)
       ) {
-        setIsDrawingBoardOpen(false); // Đóng board
+        setIsDrawingBoardOpen(false);
+      }
+
+      if (
+        historyDropdownRef.current &&
+        !historyDropdownRef.current.contains(event.target as Node) &&
+        !inputRef.current?.contains(event.target as Node)
+      ) {
+        setIsHistoryDropdownOpen(false);
       }
     };
 
@@ -67,6 +117,7 @@ const LookupArea: FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm mb-4">
       <div className="flex flex-col md:flex-row gap-4">
@@ -80,7 +131,7 @@ const LookupArea: FC = () => {
             <ChevronDown className="w-5 h-5 ml-2" />
           </button>
 
-          {/* Dropdown */}
+          {/* Language Dropdown */}
           {isDropdownOpen && (
             <div
               className="absolute left-0 mt-1 md:w-auto bg-white border border-gray-200 rounded-lg shadow-lg z-10"
@@ -95,14 +146,6 @@ const LookupArea: FC = () => {
                 >
                   Nhật - Việt
                 </li>
-                {/* <li
-                  onClick={() => handleLanguageChange("Việt - Nhật")}
-                  className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                    selectedLanguage === "Việt - Nhật" ? "bg-gray-100" : ""
-                  }`}
-                >
-                  Việt - Nhật
-                </li> */}
               </ul>
             </div>
           )}
@@ -112,19 +155,25 @@ const LookupArea: FC = () => {
         <div className="flex-1 relative">
           <div className="flex items-center border border-gray-200 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary">
             <img
-              src={SearchIcon}
+              src={SearchIcon || "/placeholder.svg"}
               className="w-6 h-6 text-gray-400 mr-2 cursor-pointer"
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
             />
             <input
+              ref={inputRef}
               type="text"
               placeholder="日本, nihon, Nhật Bản"
               className="flex-1 outline-none text-secondary"
               value={tempInputText}
               onChange={(e) => setTempInputText(e.target.value)}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearch();
+                }
+                if (e.key === "Escape") {
+                  setIsHistoryDropdownOpen(false);
                 }
               }}
             />
@@ -136,18 +185,42 @@ const LookupArea: FC = () => {
                 className="cursor-pointer"
                 onClick={() => setIsDrawingBoardOpen(true)}
               >
-                <img src={PenIcon} className="w-7 h-7" />
+                <img src={PenIcon || "/placeholder.svg"} className="w-7 h-7" />
               </button>
               <button
                 className="cursor-pointer"
                 onClick={() => setIsVoiceModalOpen(true)}
               >
-                <img src={MicIcon} className="w-7 h-7" />
+                <img src={MicIcon || "/placeholder.svg"} className="w-7 h-7" />
               </button>
             </div>
           </div>
+
+          {/* History Dropdown */}
+          {isHistoryDropdownOpen && historyItems.length > 0 && (
+            <div
+              ref={historyDropdownRef}
+              className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-80 overflow-y-auto"
+            >
+              {historyItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  onClick={() => handleHistoryItemClick(item)}
+                >
+                  <Clock className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-xl font-medium text-gray-900">
+                      {item}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
       {/* Voice modal */}
       {isVoiceModalOpen && (
         <div ref={voiceRef}>

@@ -5,13 +5,13 @@ import MicIcon from "../../assets/icon/icon-mic.svg";
 import ImageIcon from "../../assets/icon/icon-image.svg";
 import KanjiDrawingBoard from "../../components/kanji-draw-board/index";
 import translateAPI from "../../api/translateAPI";
-import LoadingOverlay from "../../components/loading-overlay";
 import VoiceRecordingModal from "../../components/voice-modal/index";
 import {
   getLocalTranslationHistory,
   saveLocalTranslationHistory,
   TranslationRecord,
 } from "../../utils/translateHistory";
+import { toast } from "react-toastify";
 
 const TranslatePage = () => {
   const [sourceLanguage, setSourceLanguage] = useState("Japanese");
@@ -20,7 +20,6 @@ const TranslatePage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isDrawingBoardOpen, setIsDrawingBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const voiceRef = useRef<HTMLDivElement>(null);
@@ -84,7 +83,7 @@ const TranslatePage = () => {
     if (file) {
       const allowedTypes = ["image/png", "image/jpeg", "application/pdf"];
       if (!allowedTypes.includes(file.type)) {
-        alert("Chỉ hỗ trợ upload file dạng ảnh (PNG, JPEG) hoặc PDF.");
+        toast.warning("Chỉ hỗ trợ upload file dạng ảnh (PNG, JPEG) hoặc PDF.");
         return;
       }
       setSelectedFile(file);
@@ -93,26 +92,23 @@ const TranslatePage = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert("Vui lòng chọn một file trước khi upload.");
+      toast.warning("Vui lòng chọn một file trước khi upload.");
       return;
     }
 
     try {
       setIsModalOpen(false);
-      setLoading(true);
       const response = await translateAPI.detect(selectedFile);
       const detectedText = response.data.data.text || "";
 
       if (detectedText) {
         setInputText(detectedText);
       } else {
-        alert("Không phát hiện được văn bản trong file.");
+        toast.warning("Không phát hiện được văn bản trong file.");
       }
     } catch (error) {
       console.error("Lỗi khi xử lý OCR:", error);
-      alert("Không thể nhận dạng văn bản từ file.");
-    } finally {
-      setLoading(false);
+      toast.error("Không thể nhận dạng văn bản từ file.");
     }
   };
 
@@ -137,7 +133,6 @@ const TranslatePage = () => {
   }, []);
   return (
     <div className="flex-1 bg-[#f5f7fa] p-6">
-      <LoadingOverlay loading={loading} />
       {/* Translation Interface */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Source Language */}
@@ -211,15 +206,13 @@ const TranslatePage = () => {
                   // }}
                   onClick={() => {
                     if (!inputText.trim()) {
-                      return alert("Vui lòng nhập văn bản.");
+                      return toast.warning("Vui lòng nhập văn bản.");
                     }
                     if (
                       !socketRef.current ||
                       socketRef.current.readyState !== WebSocket.OPEN
                     ) {
-                      return alert(
-                        "Chưa kết nối đến server. Vui lòng thử lại sau."
-                      );
+                      return;
                     }
 
                     setTranslatedText("");
@@ -405,7 +398,7 @@ const TranslatePage = () => {
                     "application/pdf",
                   ];
                   if (!allowedTypes.includes(file.type)) {
-                    alert(
+                    toast.warning(
                       "Chỉ hỗ trợ upload file dạng ảnh (PNG, JPEG) hoặc PDF."
                     );
                     return;
